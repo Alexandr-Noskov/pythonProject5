@@ -1,9 +1,10 @@
-import UrlValidator
+
 from rest_framework import serializers
-from rest_framework.fields import SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
-from main.models import Courses, Lesson
+from main.models import Courses, Lesson, Payments
+
+from main.validators import UrlValidator
 
 from users.models import User
 
@@ -52,3 +53,15 @@ class CourseSerializer(serializers.ModelSerializer):
     # Получаем все поля для дополнительного поля уроков с фильтрацией по курсу
     def get_lessons(self, course):
         return LessonListSerializer(Lesson.objects.filter(course=course), many=True).data
+
+# Сериалайзеры для платежей Payments
+class PaymentsSerializer(serializers.ModelSerializer):
+    """Класс-сериализотор для модели платежей Payments"""
+
+    course_pay = SlugRelatedField(slug_field='name', queryset=Courses.objects.all())
+    lesson_pay = SlugRelatedField(slug_field='name', queryset=Lesson.objects.all())
+    owner = SlugRelatedField(slug_field='first_name', queryset=User.objects.all())
+
+    class Meta:
+        model = Payments
+        fields = '__all__'
