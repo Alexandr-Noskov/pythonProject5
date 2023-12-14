@@ -17,7 +17,7 @@ from users.models import UserRoles
 class CoursesViewSet(viewsets.ModelViewSet):
     """Сериализатор для курсов"""
     serializer_class = CourseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsModeratorOrReadOnly]
     pagination_class = EducationPaginator  # Пагинация
 
     class Meta:
