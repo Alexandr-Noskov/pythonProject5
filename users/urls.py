@@ -1,11 +1,17 @@
 
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from users.apps import UsersConfig
+from users.views import UserViewSet
 
 # Добавили связи с Юзером
 app_name = UsersConfig.name
+
+# роутер viewset user
+router = DefaultRouter()
+router.register(r'', UserViewSet, basename='users')
 
 urlpatterns = [
     # паттерны для авторизации
