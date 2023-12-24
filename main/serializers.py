@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
-from main.models import Courses, Lesson, Payments
+from main.models import Courses, Lesson, Payments, Subscription
 
 from main.validators import UrlValidator
 
@@ -64,4 +64,11 @@ class PaymentsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payments
+        fields = '__all__'
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """ Сериализотор подписок(подписан или нет) """
+
+    class Meta:
+        model = Subscription
         fields = '__all__'

@@ -5,11 +5,11 @@ from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 
-from main.models import Courses, Lesson, Payments
+from main.models import Courses, Lesson, Payments, Subscription
 from main.paginators import EducationPaginator
-from main.permissions import IsModeratorOrReadOnly, IsPaymentOwner
+from main.permissions import IsModeratorOrReadOnly, IsPaymentOwner, IsCourseOrLessonOwner
 
-from main.serializers import CourseSerializer, LessonSerializer, PaymentsSerializer
+from main.serializers import CourseSerializer, LessonSerializer, PaymentsSerializer, SubscriptionSerializer
 from users.models import UserRoles
 
 
@@ -63,18 +63,55 @@ class LessonCreateAPIView(generics.CreateAPIView):
         new_lesson.owner = self.request.user
         new_lesson.save()
 
-class LessonCreateAPIView(generics.CreateAPIView):
-    """Generic создания урока Lesson"""
+class LessonRetrieveAPIView(generics.RetrieveAPIView):
+    """Generic одного урокаLesson"""
     serializer_class = LessonSerializer
-    permission_classes = [IsAuthenticated, IsPaymentOwner]
+    queryset = Lesson.objects.all()
+    permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
 
-    def perform_create(self, serializer):
-        """ Запрещаем модераторам создавать уроки """
+    def get_queryset(self):
+        """ Открываем доступ только владельцам и модераторам """
+
         if self.request.user.role == UserRoles.MODERATOR:
-            raise PermissionDenied("Вы не можете создавать уроки")
-        new_lesson = serializer.save()
-        new_lesson.owner = self.request.user
-        new_lesson.save()
+            return Lesson.objects.all()
+        else:
+            return Lesson.objects.filter(owner=self.request.user)
+
+
+class LessonUpdateAPIView(generics.UpdateAPIView):
+    """Generic для обновления урока Lesson"""
+    serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
+    permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+
+    def get_queryset(self):
+        """ Открываем доступ только владельцам и модераторам """
+
+        if self.request.user.role == UserRoles.MODERATOR:
+            return Lesson.objects.all()
+        else:
+            return Lesson.objects.filter(owner=self.request.user)
+
+
+class LessonDestroyAPIView(generics.DestroyAPIView):
+    """Generic для удаления одного урока Lesson"""
+    queryset = Lesson.objects.all()
+    permission_classes = [IsAuthenticated, IsModeratorOrReadOnly | IsCourseOrLessonOwner]
+
+    def get_queryset(self):
+        """ Открываем доступ только владельцам и модераторам """
+
+        if self.request.user.role == UserRoles.MODERATOR:
+            return Lesson.objects.all()
+        else:
+            return Lesson.objects.filter(owner=self.request.user)
+
+    def perform_destroy(self, instance):
+        """ Запрещаем модераторам удалять объект """
+
+        if self.request.user.role == UserRoles.MODERATOR:
+            raise PermissionDenied("Вам нельзя удалять уроки")
+        instance.delete()
 
 
 class LessonListAPIView(generics.ListAPIView):
@@ -136,3 +173,16 @@ class PaymentsRetrieveAPIView(generics.RetrieveAPIView):
             return Payments.objects.all()
         else:
             return Payments.objects.filter(owner=self.request.user)
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    """ ViewSet для подписок """
+
+    serializer_class = SubscriptionSerializer
+    queryset = Subscription.objects.all()
+    lookup_field = 'id'
+
+    def perform_create(self, serializer):
+        """ Сохранение подписки True или False для определенного пользователя"""
+
+        new_subscription = serializer.save(user=self.request.user)  # Привязка
+        new_subscription.save() # Сохраняем
