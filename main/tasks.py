@@ -5,8 +5,8 @@ from main.models import Courses
 
 
 @shared_task
-def sendmail(product_id):
-    cours = Courses.objects.get(pk=product_id)
+def notify_subscriptions_about_course_update(course_id):
+    cours = Courses.objects.get(pk=course_id)
     sublist = []
     for sub in cours.subscription_set.all():
         sublist.append(sub.owner.email)
