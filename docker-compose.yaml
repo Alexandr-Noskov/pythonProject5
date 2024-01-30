@@ -38,5 +38,13 @@ services:
       - redis
       - app
 
+  celery_beat:
+    build: .
+    tty: true
+    command: celery -A config beat -l info -S django
+    depends_on:
+      - redis
+      - app
+
 volumes:
   pg_data:
